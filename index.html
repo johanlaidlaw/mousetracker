@@ -1,0 +1,57 @@
+<html>
+	<head>
+		<script src="http://localhost:8089/socket.io/socket.io.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+		<script>
+			var socket = io.connect('http://localhost:8089');
+
+			usernames = {};
+
+			function move_user(username,x,y){
+				$("#"+username).css({'top': y, 'left': x});
+			}
+
+			socket.on('connect', function(){
+				username = prompt("What's your name mate?");
+				$("#yourname").html("Welcome "+username);
+				socket.emit("join",username,0,0);
+			});
+
+			// When a new user connects
+			// Draw the user box and place it at the correct spot
+			socket.on("new_user",function(new_user,x,y){
+				if(new_user != username){
+					$("body").append('<div class="moveable" id="'+new_user+'">'+new_user+'<div>');
+					move_user(new_user,x,y);
+				}
+			});
+
+			// One of the clients are moving..
+			socket.on("client_is_moving",function(username,x,y){
+				move_user(username,x,y);
+			});
+			
+			// A user has left the building..
+			socket.on("user_has_left",function(username){
+				$("#"+username).remove();
+			});
+
+			// on load of page
+			$(function(){
+				$("body").mousemove(function(event){
+					socket.emit("move",event.pageX,event.pageY);
+				});
+				
+			});
+
+		</script>
+		<style type="text/css">    
+	    	.moveable { position:absolute; border:1px solid #1F7A06; background-color: #B5F7A3; padding:5px; }
+	    </style>
+		
+	</head>
+	<body>
+		<div id="yourname" style="font-size:2.5em;font-weight:bold;"></div>
+	</body>
+
+</html>
